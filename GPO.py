@@ -637,6 +637,7 @@ class Agent:
         if cfg.algorithm == 'ppo':
             if self.eps_clip >= cfg.eps_clip_min:
                 self.eps_clip -=cfg.eps_clip_step
+
             for i in range(self.K_epoch):
                 for l in range(len(self.batch_store)):
                     batch_data = self.batch_store[l]

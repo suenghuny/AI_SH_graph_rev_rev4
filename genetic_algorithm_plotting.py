@@ -165,6 +165,7 @@ if __name__ == "__main__":
     polar_chart = [polar_chart_scenario1]
     df_dict = {}
     episode_polar_chart = polar_chart[0]
+    print(episode_polar_chart)
     datasets = [i for i in range(1, 15)]
     for dataset in datasets:
         fitness_history = []
@@ -185,11 +186,17 @@ if __name__ == "__main__":
         df_dict = {}
         records = list()
 
+
+
+
         solution_space = [[i for i in range(0, 20)], [i  for i in range(0, 50)],
                           [i  for i in range(0, 20)], [i  for i in range(0, 50)], [i for i in range(0,200)],
                           [i for i in range(0,300)]]
-        num_genes = len(solution_space)
 
+
+
+
+        num_genes = len(solution_space)
         initial_population = []
         sol_per_pop = 8
         for _ in range(sol_per_pop):
@@ -206,7 +213,6 @@ if __name__ == "__main__":
         crossover_type = "single_point"
         mutation_type = "random"
         mutation_percent_genes = 10
-
         import pygad
         ga_instance = pygad.GA(num_generations=num_generations,
                                num_parents_mating=num_parents_mating,
