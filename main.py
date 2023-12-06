@@ -3,7 +3,7 @@ from Components.Adapter_Component import *
 from Components.Policy import *
 from collections import deque
 from cfg import get_cfg
-from GDN import Agent
+from DQN import Agent
 import numpy as np
 
 fix_l = 0
