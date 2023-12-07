@@ -1422,6 +1422,11 @@ class Ship:
         return estimated_x, estimated_y
 
     def target_allot_by_action_feature(self, action_feature):
+
+        if self.side == 'blue':
+            len_limit = len(self.env.enemies_fixed_list)  # 적함에 대한 표적할당
+        else:
+            len_limit = len(self.env.friendlies_fixed_list)  # 우군함에 대한 표적할당
         # print(action_feature)
         if action_feature == [0, 0, 0, 0, 0, 0, 0, 0]:
             target_id = 0
@@ -1433,12 +1438,12 @@ class Ship:
                     #print(action_feature)
             for tar in self.ssm_detections:
                 if action_feature == tar.last_action_feature[self.id-1]:
-                    target_id = self.ssm_detections.index(tar) + 1 + self.surface_tracking_limit
+                    target_id = self.ssm_detections.index(tar) + 1 + len_limit
                     #print(action_feature)
 
         if target_id == 0:
             target = None
-        if (target_id >= 1) and (target_id <= self.surface_tracking_limit):  # 대함표적에 대한 prelaunching process logic
+        if (target_id >= 1) and (target_id <= len_limit):  # 대함표적에 대한 prelaunching process logic
             target_idx = target_id - 1  # no_ops를 제외하고 index한다.
             if self.side == 'blue':
                 target = self.env.enemies_fixed_list[target_idx]  # 적함에 대한 표적할당
@@ -1452,7 +1457,7 @@ class Ship:
             launching_time = self.env.now + np.random.uniform(self.ssm_launching_duration_min,
                                                               self.ssm_launching_duration_max)  # 대함 발사 소요시간
             self.surface_prelaunching_managing_list.append([launching_time, missile, target])
-        if target_id > self.surface_tracking_limit:  # 대공표적에 대한 prelauching_process 수행
+        if target_id > len_limit:  # 대공표적에 대한 prelauching_process 수행
             "LSAM의 경우는 표적할당부터 해당 LSAM 파괴 시까지 capacity를 하나 가져간다"
             "MSAM의 경우는 표적할당부터 해당 MSAM 발사 시까지 capacity를 하나 가져간다"
             "각 유도탄에 대해서는 일정 시간의 발사 준비시간이 소요됨 해당 "
@@ -1460,7 +1465,7 @@ class Ship:
             "이 로직에 거리에 대한 sorting이 들어가야함"
             "get_avail_actions에서는 가까운 순서대로 앞 index를 가져옴"
             "surface_limit의 의미 : 표적관리를 몇개까지 할 것인가?"
-            target_idx = target_id - self.surface_tracking_limit - 1  # 대공 표적에 대한 index는 no_ops, 그다음 self.surface_limit다 채우고 시작
+            target_idx = target_id - len_limit - 1  # 대공 표적에 대한 index는 no_ops, 그다음 self.surface_limit다 채우고 시작
             target = self.ssm_detections[target_idx]
             "무장 운용 우선순위"
             "해당 거리 대에 최적화된 무장을 운용"
@@ -1501,9 +1506,13 @@ class Ship:
         self.action_history.append(target)
 
     def target_allocation_process(self, target_id):
+        if self.side == 'blue':
+            len_limit = len(self.env.enemies_fixed_list)  # 적함에 대한 표적할당
+        else:
+            len_limit = len(self.env.friendlies_fixed_list)  # 우군함에 대한 표적할당
         if target_id == 0:
             pass
-        if (target_id >= 1) and (target_id <= self.surface_tracking_limit):  # 대함표적에 대한 prelaunching process logic
+        if (target_id >= 1) and (target_id <= len_limit):  # 대함표적에 대한 prelaunching process logic
             target_idx = target_id - 1  # no_ops를 제외하고 index한다.
             if self.side == 'blue':
                 target = self.env.enemies_fixed_list[target_idx]  # 적함에 대한 표적할당
@@ -1522,7 +1531,7 @@ class Ship:
             launching_time = self.env.now + np.random.uniform(self.ssm_launching_duration_min,
                                                               self.ssm_launching_duration_max)  # 대함 발사 소요시간
             self.surface_prelaunching_managing_list.append([launching_time, missile, target])
-        if target_id > self.surface_tracking_limit:  # 대공표적에 대한 prelauching_process 수행
+        if target_id >  len_limit:  # 대공표적에 대한 prelauching_process 수행
             "LSAM의 경우는 표적할당부터 해당 LSAM 파괴 시까지 capacity를 하나 가져간다"
             "MSAM의 경우는 표적할당부터 해당 MSAM 발사 시까지 capacity를 하나 가져간다"
             "각 유도탄에 대해서는 일정 시간의 발사 준비시간이 소요됨 해당 "
@@ -1530,7 +1539,7 @@ class Ship:
             "이 로직에 거리에 대한 sorting이 들어가야함"
             "get_avail_actions에서는 가까운 순서대로 앞 index를 가져옴"
             "surface_limit의 의미 : 표적관리를 몇개까지 할 것인가?"
-            target_idx = target_id - self.surface_tracking_limit - 1  # 대공 표적에 대한 index는 no_ops, 그다음 self.surface_limit다 채우고 시작
+            target_idx = target_id -  len_limit - 1  # 대공 표적에 대한 index는 no_ops, 그다음 self.surface_limit다 채우고 시작
             # print([cal_distance(self, tar) for tar in self.ssm_detections])
             target = self.ssm_detections[target_idx]
             "무장 운용 우선순위"

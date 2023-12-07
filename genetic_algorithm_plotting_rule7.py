@@ -4,11 +4,10 @@ from Components.Policy import *
 from cfg import get_cfg
 
 import numpy as np
-
-fit_records = []
-best_solutions = dict()
 fix_l = 0
 fix_u = 17
+fit_records = []
+best_solutions = dict()
 def on_start(ga_instance):
     print("on_start()")
 
@@ -34,15 +33,15 @@ def on_stop(ga_instance, last_population_fitness):
     print("on_stop()")
 
 
-def simulation(solution, ga = True,raw_data = None):
+def simulation(solution, ga = True, raw_data = None):
     temperature1 = solution[0]
     interval_constant_blue1 = solution[1]
     temperature2 = solution[2]
     interval_constant_blue2 = solution[3]
     air_alert_distance = solution[4]
-    warning_distance = solution[5]
+    enemy_ship_normalizer_blue = solution[5]
+    warning_distance = solution[6]
     score = 0
-
     if ga == False:
         seed = cfg.seed
         np.random.seed(seed)
@@ -68,14 +67,15 @@ def simulation(solution, ga = True,raw_data = None):
                       interval_constant_blue = [interval_constant_blue1, interval_constant_blue2]
                       )
         epi_reward, eval, win_tag= evaluation(env, temperature1=temperature1,temperature2 = temperature2,
-                                              warning_distance=warning_distance)
+                                              warning_distance = warning_distance,
+                                              enemy_ship_normalizer_blue = enemy_ship_normalizer_blue)
         if win_tag != 'lose':
-            score += 1 / n
-            if ga == False:
+            score += 1/n
+            if ga==False:
                 raw_data.append([str(env.random_recording), 1])
         else:
             score += 0
-            if ga == False:
+            if ga==False:
                 raw_data.append([str(env.random_recording), 0])
 
     print(score, solution)
@@ -83,6 +83,7 @@ def simulation(solution, ga = True,raw_data = None):
         return score
     else:
         return score, raw_data
+
 
 def fitness_func(ga_instance, solution, solution_idx):
     score = simulation(solution)
@@ -110,7 +111,8 @@ def preprocessing(scenarios):
 def evaluation(env,
                temperature1,
                temperature2,
-               warning_distance
+               enemy_ship_normalizer_blue,
+                warning_distance
                ):
     temp = random.uniform(fix_l, fix_u)
     agent_blue = Policy(env, rule='rule3', temperatures=[temperature1, temperature2])
@@ -126,10 +128,10 @@ def evaluation(env,
 
     while not done:
         if env.now % (decision_timestep) <= 0.00001:
-            avail_action_blue, target_distance_blue, air_alert_blue = env.get_avail_actions_temp(side='blue')
+            avail_action_blue, target_distance_blue, air_alert_blue = env.get_avail_actions_temp(side='blue', speed_normalizing_blue=True, enemy_ship_normalizer_blue=enemy_ship_normalizer_blue)
             avail_action_yellow, target_distance_yellow, air_alert_yellow = env.get_avail_actions_temp(side='yellow')
 
-            action_blue = agent_blue.get_action(avail_action_blue, target_distance_blue, air_alert_blue, open_fire_distance = warning_distance)
+            action_blue = agent_blue.get_action(avail_action_blue, target_distance_blue, air_alert_blue, open_fire_distance= warning_distance)
             action_yellow = agent_yellow.get_action(avail_action_yellow, target_distance_yellow, air_alert_yellow)
             reward, win_tag, done, leaker = env.step(action_blue, action_yellow, rl = False)
             episode_reward += reward
@@ -205,20 +207,24 @@ if __name__ == "__main__":
         remains_ratio = list()
         df_dict = {}
         records = list()
+
         solution_space = [[i/10 for i in range(-200, 200)], [i/10  for i in range(0, 500)],
                           [i/10  for i in range(-200, 200)], [i/10  for i in range(0, 500)], [i/10 for i in range(0,2000)],
-                          [i/10 for i in range(0, 3000)]]
+                          [i /10 for i in range(1, 1000)], [i/10 for i in range(0,3000)]
+                          ]
+
+
 
         num_genes = len(solution_space)
 
         initial_population = []
-        sol_per_pop =8
+        sol_per_pop =20
         np.random.seed(cfg.seed)
         for _ in range(sol_per_pop):
             new_solution = [np.random.choice(space) for space in solution_space]
             initial_population.append(new_solution)
 
-        num_generations = 12 # 세대 수
+        num_generations = 10 # 세대 수
         num_parents_mating = 6  # 각 세대에서 선택할 부모 수
         init_range_low = 0
         init_range_high = 20
@@ -227,6 +233,8 @@ if __name__ == "__main__":
         crossover_type = "single_point"
         mutation_type = "random"
         mutation_percent_genes = 30
+
+
         import pygad
         ga_instance = pygad.GA(num_generations=num_generations,
                                num_parents_mating=num_parents_mating,
@@ -247,8 +255,7 @@ if __name__ == "__main__":
                                on_mutation=on_mutation,
                                on_generation=on_generation,
                                on_stop=on_stop,
-                               random_seed=cfg.seed
-
+                               random_seed = cfg.seed
                                )
 
         # 최적화 실행
@@ -264,7 +271,14 @@ if __name__ == "__main__":
 
         best_solution_records[dataset] = empty_dict
         df_fit = pd.DataFrame(fit_records)
-
+        #df_fit.to_csv('fitness_records_dataset{}_rule7_param2.csv'.format(dataset))
+        if vessl_on == True:
+            df_fit.to_csv(output_dir + 'fitness_records_dataset{}_rule7_param2_remains.csv'.format(dataset))
+            for s in range(len(fit_records)):
+                f = fit_records[s]
+                vessl.log(step=s, payload={'fitness_records_dataset_{}'.format(dataset): f})
+        else:
+            df_fit.to_csv('fitness_records_dataset{}_rule7_param2_angle_{}_remains.csv'.format(dataset, cfg.inception_angle))
 
         fit_records = []
 
@@ -275,14 +289,12 @@ if __name__ == "__main__":
         df_result = pd.DataFrame(non_lose_ratio_list)
         df_raw = pd.DataFrame(raw_data)
         if vessl_on == True:
-            df_result.to_csv(output_dir + "GA_result_rule3_param2_angle_{}.csv".format(cfg.inception_angle))
-            df_raw.to_csv(output_dir+"raw_data_rule3_angle_{}.csv".format(cfg.inception_angle))
-            df_fit.to_csv(output_dir+'fitness_records_dataset{}_rule3_param2_{}.csv'.format(dataset, cfg.inception_angle))
+            df_result.to_csv(output_dir + "GA_result_rule7_param2_angle_{}_remains.csv".format(cfg.inception_angle))
+            df_raw.to_csv(output_dir+"raw_data_rule7_angle_{}_remains.csv".format(cfg.inception_angle))
             vessl.log(step=dataset, payload={'non_lose_ratio': score})
         else:
-            df_result.to_csv("GA_result_rule3_param2_angle_{}.csv".format(cfg.inception_angle))
-            df_raw.to_csv("raw_data_rule3_angle_{}.csv".format(cfg.inception_angle))
-            df_fit.to_csv('fitness_records_dataset{}_rule3_param2_{}.csv'.format(dataset, cfg.inception_angle))
+            df_result.to_csv("GA_result_rule7_param2_angle_{}_remains.csv".format(cfg.inception_angle))
+            df_raw.to_csv("raw_data_rule7_angle_{}_remains.csv".format(cfg.inception_angle))
 
 
 

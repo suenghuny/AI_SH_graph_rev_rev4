@@ -216,8 +216,8 @@ class Environment:
 
 
 
-        self.ship_friendly_action_space = np.max([ship.surface_tracking_limit for ship in self.friendlies])
-        self.ship_enemy_action_space = np.max([ship.surface_tracking_limit for ship in self.enemies])
+        self.ship_friendly_action_space = len(self.enemies)
+        self.ship_enemy_action_space = len(self.friendlies)
 
         self.air_friendly_action_space = np.max([ship.air_tracking_limit for ship in self.friendlies])
         self.air_enemy_action_space = np.max([ship.air_tracking_limit for ship in self.enemies])
@@ -248,6 +248,9 @@ class Environment:
         self.last_action_encodes = np.eye(self.action_size_friendly)
         self.f11 = [0,0,0,0,0,0,0,0]
         self.f11_deque = deque(maxlen = self.action_history_step)
+
+
+
         for _ in range(self.action_history_step):
             self.f11_deque.append(self.f11)
 
@@ -278,6 +281,12 @@ class Environment:
         air_alert = False
 
         for ship in friendlies_fixed_list:
+
+            if ship.side == 'blue':
+                len_limit = len(self.enemies_fixed_list)  # 적함에 대한 표적할당
+            else:
+                len_limit = len(self.friendlies_fixed_list)  # 우군함에 대한 표적할당
+
             avail_action_friendly = deepcopy(avail_action_friendly_model)
             len_avail_action_friendly = len(avail_action_friendly)
             avail_action_friendly[0] = True  # null-action은 항상 True
@@ -376,22 +385,22 @@ class Environment:
                             if len_idle_l_sam > 0:  # l_sam 잔여량 1개 이상
                                 concat_distance = np.concatenate([distance_range_4, distance_range_3, distance_range_2])
                                 for s in range(len4 + len3 + len2):  # 모든 범위(range_2, range_3, range_4) 내에 표적 교전 가능
-                                    if s + ship.surface_tracking_limit + 1 < len_avail_action_friendly:
-                                        avail_action_friendly[s + ship.surface_tracking_limit + 1] = True
+                                    if s + len_limit  + 1 < len_avail_action_friendly:
+                                        avail_action_friendly[s + len_limit + 1] = True
                                         distance_list.append(concat_distance[s])
 
                             if (len_idle_l_sam == 0) and (len_idle_m_sam > 0):  # l_sam 잔여량은 0개, m_sam의 잔여량은 1개 이상
                                 concat_distance = np.concatenate([distance_range_4, distance_range_3])
                                 for s in range(len4 + len3):  # m_sam 및 ciws 범위(range_3, range_4) 내에 표적 교전 가능
-                                    if s + ship.surface_tracking_limit + 1 < len_avail_action_friendly:
-                                        avail_action_friendly[s + ship.surface_tracking_limit + 1] = True
+                                    if s + len_limit + 1 < len_avail_action_friendly:
+                                        avail_action_friendly[s + len_limit + 1] = True
                                         distance_list.append(concat_distance[s])
 
                             if (len_idle_l_sam == 0) and (len_idle_m_sam == 0):  # l_sam, m_sam 모두 잔여량 없음(ciws로만 교전 가능)
                                 concat_distance = np.concatenate([distance_range_4])
                                 for s in range(len4):  # sam 교전 불가, ciws로만 교전 가능
-                                    if s + ship.surface_tracking_limit + 1 < len_avail_action_friendly:
-                                        avail_action_friendly[s + ship.surface_tracking_limit + 1] = True
+                                    if s + len_limit + 1 < len_avail_action_friendly:
+                                        avail_action_friendly[s + len_limit + 1] = True
                                         distance_list.append(concat_distance[s])
 
 
@@ -401,44 +410,44 @@ class Environment:
                                 concat_distance = np.concatenate([distance_range_4, distance_range_3])
                                 if (len_idle_l_sam > 0):  # l_sam 잔여량 한개 이상
                                     for s in range(len3 + len4):  # m_sam 및 ciws 범위(range_3, range_4) 내에 표적 교전 가능
-                                        if s + ship.surface_tracking_limit + 1 < len_avail_action_friendly:
-                                            avail_action_friendly[s + ship.surface_tracking_limit + 1] = True
+                                        if s + len_limit + 1 < len_avail_action_friendly:
+                                            avail_action_friendly[s + len_limit + 1] = True
                                             distance_list.append(concat_distance[s])
 
                                 if (len_idle_l_sam == 0) and (len_idle_m_sam > 0):  # l_sam 잔여량 0개, m_sam 잔여량 한개 이상
                                     concat_distance = np.concatenate([distance_range_4, distance_range_3])
                                     for s in range(len3 + len4):  # m_sam 및 ciws 범위(range_3, range_4) 내에 표적 교전 가능
-                                        if s + ship.surface_tracking_limit + 1 < len_avail_action_friendly:
-                                            avail_action_friendly[s + ship.surface_tracking_limit + 1] = True
+                                        if s + len_limit + 1 < len_avail_action_friendly:
+                                            avail_action_friendly[s + len_limit + 1] = True
                                             distance_list.append(concat_distance[s])
 
                                 if (len_idle_l_sam == 0) and (len_idle_m_sam == 0):  # l_sam 및 m_sam 잔여량 0개
                                     concat_distance = np.concatenate([distance_range_4])
                                     for s in range(len4):  # ciws 범위(range-4) 교전 가능 / sam 교전 불가
-                                        if s + ship.surface_tracking_limit + 1 < len_avail_action_friendly:
-                                            avail_action_friendly[s + ship.surface_tracking_limit + 1] = True
+                                        if s + len_limit + 1 < len_avail_action_friendly:
+                                            avail_action_friendly[s + len_limit + 1] = True
                                             distance_list.append(concat_distance[s])
 
                             if (len2 != 0) and (len3 == 0) and (len4 != 0):  # l_sam 및 ciws 교전구역에 표적 존재
                                 concat_distance = np.concatenate([distance_range_4, distance_range_2])
                                 if (len_idle_l_sam > 0):  # l_sam 잔여량 한개 이상
                                     for s in range(len2 + len4):  # l_sam 및 ciws 범위(range_2, range-4) 내에 표적 교전 가능
-                                        if s + ship.surface_tracking_limit + 1 < len_avail_action_friendly:
-                                            avail_action_friendly[s + ship.surface_tracking_limit + 1] = True
+                                        if s + len_limit + 1 < len_avail_action_friendly:
+                                            avail_action_friendly[s + len_limit + 1] = True
                                             distance_list.append(concat_distance[s])
 
                                 if (len_idle_l_sam == 0) and (len_idle_m_sam > 0):  # l_sam 잔여량 0개, m_sam 잔여량 한개 이상
                                     concat_distance = np.concatenate([distance_range_4])
                                     for s in range(len4):  # ciws 범위(range_4) 내에 표적 교전 가능
-                                        if s + ship.surface_tracking_limit + 1 < len_avail_action_friendly:
-                                            avail_action_friendly[s + ship.surface_tracking_limit + 1] = True
+                                        if s + len_limit + 1 < len_avail_action_friendly:
+                                            avail_action_friendly[s + len_limit + 1] = True
                                             distance_list.append(concat_distance[s])
 
                                 if (len_idle_l_sam == 0) and (len_idle_m_sam == 0):  # l_sam 및 m_sam 잔여량 0개
                                     concat_distance = np.concatenate([distance_range_4])
                                     for s in range(len4):  # ciws 범위(range_4) 교전 가능 / sam 교전 불가
-                                        if s + ship.surface_tracking_limit + 1 < len_avail_action_friendly:
-                                            avail_action_friendly[s + ship.surface_tracking_limit + 1] = True
+                                        if s + len_limit + 1 < len_avail_action_friendly:
+                                            avail_action_friendly[s + len_limit + 1] = True
                                             distance_list.append(concat_distance[s])
 
                             if (len2 != 0) and (len3 != 0) and (len4 == 0):  # l_sam 및 m_sam 교전구역에 표적 존재
@@ -446,15 +455,15 @@ class Environment:
                                 if (len_idle_l_sam > 0):  # l_sam 잔여량 한개 이상
                                     concat_distance = np.concatenate([distance_range_3, distance_range_2])
                                     for s in range(len2 + len3):  # l_sam 및 m_sam 교전구역 공격 가능
-                                        if s + ship.surface_tracking_limit + 1 < len_avail_action_friendly:
-                                            avail_action_friendly[s + ship.surface_tracking_limit + 1] = True
+                                        if s + len_limit + 1 < len_avail_action_friendly:
+                                            avail_action_friendly[s + len_limit + 1] = True
                                             distance_list.append(concat_distance[s])
 
                                 if (len_idle_l_sam == 0) and (len_idle_m_sam > 0):  # l_sam 잔여량 0개, m_sam 잔여량 한개 이상
                                     concat_distance = np.concatenate([distance_range_3])
                                     for s in range(len3):  # m_sam 교전구역 공격 가능
-                                        if s + ship.surface_tracking_limit + 1 < len_avail_action_friendly:
-                                            avail_action_friendly[s + ship.surface_tracking_limit + 1] = True
+                                        if s + len_limit + 1 < len_avail_action_friendly:
+                                            avail_action_friendly[s + len_limit + 1] = True
                                             distance_list.append(concat_distance[s])
 
                                 if (len_idle_l_sam == 0) and (len_idle_m_sam == 0):  # l_sam 및 m_sam 잔여량 0개
@@ -464,8 +473,8 @@ class Environment:
                                 if (len_idle_l_sam > 0):  # l_sam 잔여량 한개 이상
                                     concat_distance = np.concatenate([distance_range_2])
                                     for s in range(len2):  # l_sam 교전구역 공격 가능
-                                        if s + ship.surface_tracking_limit + 1 < len_avail_action_friendly:
-                                            avail_action_friendly[s + ship.surface_tracking_limit + 1] = True
+                                        if s + len_limit + 1 < len_avail_action_friendly:
+                                            avail_action_friendly[s + len_limit + 1] = True
                                             distance_list.append(concat_distance[s])
 
                                 if (len_idle_l_sam == 0) and (len_idle_m_sam > 0):  # l_sam 잔여량 0개, m_sam 잔여량 한개 이상
@@ -478,15 +487,15 @@ class Environment:
                                 if (len_idle_l_sam > 0):  # l_sam 잔여량 한개 이상
                                     concat_distance = np.concatenate([distance_range_3])
                                     for s in range(len3):  # m_sam 교전구역 공격 가능
-                                        if s + ship.surface_tracking_limit + 1 < len_avail_action_friendly:
-                                            avail_action_friendly[s + ship.surface_tracking_limit + 1] = True
+                                        if s + len_limit + 1 < len_avail_action_friendly:
+                                            avail_action_friendly[s + len_limit + 1] = True
                                             distance_list.append(concat_distance[s])
 
                                 if (len_idle_l_sam == 0) and (len_idle_m_sam > 0):  # l_sam 잔여량 0개, m_sam 잔여량 한개 이상
                                     concat_distance = np.concatenate([distance_range_3])
                                     for s in range(len3):  # m_sam 교전구역 공격 가능
-                                        if s + ship.surface_tracking_limit + 1 < len_avail_action_friendly:
-                                            avail_action_friendly[s + ship.surface_tracking_limit + 1] = True
+                                        if s + len_limit + 1 < len_avail_action_friendly:
+                                            avail_action_friendly[s + len_limit + 1] = True
                                             distance_list.append(concat_distance[s])
 
                                 if (len_idle_l_sam == 0) and (len_idle_m_sam == 0):  # l_sam 및 m_sam 잔여량 0개
@@ -496,22 +505,22 @@ class Environment:
                                 if (len_idle_l_sam > 0):  # l_sam 잔여량 한개 이상
                                     concat_distance = np.concatenate([distance_range_4])
                                     for s in range(len4):  # ciws 범위(range_4) 교전 가능 / sam 교전 불가
-                                        if s + ship.surface_tracking_limit + 1 < len_avail_action_friendly:
-                                            avail_action_friendly[s + ship.surface_tracking_limit + 1] = True
+                                        if s + len_limit + 1 < len_avail_action_friendly:
+                                            avail_action_friendly[s + len_limit + 1] = True
                                             distance_list.append(concat_distance[s])
 
                                 if (len_idle_l_sam == 0) and (len_idle_m_sam > 0):  # l_sam 잔여량 0개, m_sam 잔여량 한개 이상
                                     concat_distance = np.concatenate([distance_range_4])
                                     for s in range(len4):  # ciws 범위(range_4) 교전 가능 / sam 교전 불가
-                                        if s + ship.surface_tracking_limit + 1 < len_avail_action_friendly:
-                                            avail_action_friendly[s + ship.surface_tracking_limit + 1] = True
+                                        if s + len_limit + 1 < len_avail_action_friendly:
+                                            avail_action_friendly[s + len_limit + 1] = True
                                             distance_list.append(concat_distance[s])
 
                                 if (len_idle_l_sam == 0) and (len_idle_m_sam == 0):  # l_sam 및 m_sam 잔여량 0개
                                     concat_distance = np.concatenate([distance_range_4])
                                     for s in range(len4):  # ciws 범위(range_4) 교전 가능 / sam 교전 불가
-                                        if s + ship.surface_tracking_limit + 1 < len_avail_action_friendly:
-                                            avail_action_friendly[s + ship.surface_tracking_limit + 1] = True
+                                        if s + len_limit + 1 < len_avail_action_friendly:
+                                            avail_action_friendly[s + len_limit+ 1] = True
                                             distance_list.append(concat_distance[s])
             avail_actions.append(avail_action_friendly)
             if distance_list == list():
@@ -655,6 +664,7 @@ class Environment:
             edge_index[0].append(i+len_enemies+1)
 
         return edge_index
+
     def get_ssm_to_ssm_edge_index(self, k = 1):  #변경 완료
         edge_index = [[],[]]
         ship = self.friendlies_fixed_list[k]
@@ -763,8 +773,8 @@ class Environment:
                 ssm_speed = enemy.speed_m
                 node_features.append([f1, f2, f3, f4, f5, f6, 0, ssm_speed/1.4])
                 enemy.last_action_feature[k] = [f1, f2, f3, f4, f5, f6, 0, ssm_speed/1.4]
-        if ship.surface_tracking_limit+1-len(node_features)>0:
-            for _ in range(ship.surface_tracking_limit+1-len(node_features)):
+        if len(self.enemies_fixed_list)+1-len(node_features)>0:
+            for _ in range(len(self.enemies_fixed_list)+1-len(node_features)):
                 node_features.append(dummy)
         for missile in ship.ssm_detections:
             f1, f2, f3, f4, f5, f6 = self.get_feature(ship, missile, action_feature= True)
