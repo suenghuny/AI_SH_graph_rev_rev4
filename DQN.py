@@ -607,7 +607,7 @@ class Agent:
 
         self.node_embedding = NodeEmbedding(feature_size=feature_size_missile,
                                                               n_representation_obs=n_representation_action,
-                                                              layers=node_embedding_layers_ship).to(device)  # 수정사항
+                                                              layers=node_embedding_layers_missile).to(device)  # 수정사항
 
 
         self.DuelingQ = DuelingDQN().to(device)
@@ -721,8 +721,11 @@ class Agent:
             for mnf in missile_node_feature:
                 temp.append(torch.cat([torch.tensor(mnf), torch.tensor(self.dummy_node[max_len - len(mnf)])], dim=0).tolist())
             missile_node_feature = torch.tensor(temp, dtype=torch.float).to(device)
-
+            #print(missile_node_feature.shape)
+            missile_node_size = missile_node_feature.shape[1]
+            missile_node_feature = missile_node_feature.reshape(self.batch_size*missile_node_size, -1)
             missile_node_feature = self.node_embedding(missile_node_feature)
+            missile_node_feature = missile_node_feature.reshape(self.batch_size, missile_node_size, -1)
             node_representation = torch.cat([node_embedding_ship_features], dim=1)
             return node_representation, missile_node_feature
 
