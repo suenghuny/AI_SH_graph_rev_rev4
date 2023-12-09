@@ -605,20 +605,22 @@ class Agent:
                                                          n_representation_obs=n_representation_ship,
                                                          layers = node_embedding_layers_ship).to(device)  # 수정사항
 
-
+        self.node_embedding = NodeEmbedding(feature_size=feature_size_missile,
+                                                              n_representation_obs=n_representation_action,
+                                                              layers=node_embedding_layers_ship).to(device)  # 수정사항
 
 
         self.DuelingQ = DuelingDQN().to(device)
         self.DuelingQtar = DuelingDQN().to(device)
 
-        self.Q = IQN(state_size_advantage=n_representation_ship + feature_size_missile,
+        self.Q = IQN(state_size_advantage=n_representation_ship + n_representation_action,
                      state_size_value=n_representation_ship,
                      action_size=self.action_size,
                      batch_size=self.batch_size, layer_size=iqn_layer_size, N=iqn_N, n_cos=n_cos,
                      layers=iqn_layers).to(device)
 
         self.Q_tar = IQN(
-            state_size_advantage=n_representation_ship + feature_size_missile,
+            state_size_advantage=n_representation_ship + n_representation_action,
             state_size_value=n_representation_ship,
             action_size=self.action_size,
             batch_size=self.batch_size, layer_size=iqn_layer_size, N=iqn_N, n_cos=n_cos, layers=iqn_layers).to(
@@ -706,6 +708,7 @@ class Agent:
                 node_embedding_ship_features = self.node_representation_ship_feature(ship_features)
                 missile_node_feature = torch.tensor(missile_node_feature, dtype=torch.float,device=device).clone().detach()
                 node_representation = torch.cat([node_embedding_ship_features], dim=1)
+                missile_node_feature = self.node_embedding(missile_node_feature)
                 return node_representation, missile_node_feature
         else:
             """ship feature 만드는 부분"""
@@ -718,6 +721,8 @@ class Agent:
             for mnf in missile_node_feature:
                 temp.append(torch.cat([torch.tensor(mnf), torch.tensor(self.dummy_node[max_len - len(mnf)])], dim=0).tolist())
             missile_node_feature = torch.tensor(temp, dtype=torch.float).to(device)
+
+            missile_node_feature = self.node_embedding(missile_node_feature)
             node_representation = torch.cat([node_embedding_ship_features], dim=1)
             return node_representation, missile_node_feature
 

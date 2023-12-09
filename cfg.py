@@ -97,6 +97,6 @@ def get_cfg():
     parser.add_argument("--k_hop", type=int, default=3, help="gnn k")
     parser.add_argument("--n_test", type=int, default=200, help="gnn k")
     parser.add_argument("--angle_random", type=bool, default=False, help="gnn k")
-    parser.add_argument("--inception_angle", type=int, default=22.5, help="gnn k")
+    parser.add_argument("--inception_angle", type=int, default=180, help="gnn k")
 
     return parser.parse_args()
