@@ -99,6 +99,9 @@ class Agent:
                                                          n_representation_obs=n_representation_ship,
                                                          layers = node_embedding_layers_ship).to(device)  # 수정사항
 
+        self.node_representation_wo_graph = NodeEmbedding(feature_size=feature_size_missile,
+                                                              n_representation_obs=n_representation_action,
+                                                              layers=node_embedding_layers_missile).to(device)  # 수정사항
 
         self.func_meta_path = GCRN(feature_size=feature_size_missile,
                                    embedding_size=cfg.n_representation_action,
@@ -137,6 +140,10 @@ class Agent:
                                     num_node_cat=1,
                                     num_edge_cat=5).to(device)
 
+        if cfg.k_hop == 0:
+            self.eval_params = list(self.network.parameters()) + \
+                               list(self.node_representation_ship_feature.parameters()) + \
+                               list(self.node_representation_wo_graph.parameters())
         if cfg.k_hop == 2:
             self.eval_params = list(self.network.parameters()) + \
                                list(self.node_representation_ship_feature.parameters()) + \
@@ -212,27 +219,82 @@ class Agent:
                                 missile_node_feature,
                                 edge_index_missile,
                                 mini_batch=False):
+
         if mini_batch == False:
+
             with torch.no_grad():
 
                 ship_features = torch.tensor(ship_features, dtype=torch.float, device=device)
                 node_embedding_ship_features = self.node_representation_ship_feature(ship_features)
                 missile_node_feature = torch.tensor(missile_node_feature, dtype=torch.float,device=device).clone().detach()
-                node_representation_graph = self.func_meta_path(A=edge_index_missile,X=missile_node_feature, mini_batch=mini_batch)
-                node_representation_graph = self.func_meta_path2(A=edge_index_missile, X=node_representation_graph,mini_batch=mini_batch)
-                if  cfg.k_hop == 3:
+                if cfg.k_hop != 0:
+                    node_representation_graph = self.func_meta_path(A=edge_index_missile,X=missile_node_feature, mini_batch=mini_batch)
+                    node_representation_graph = self.func_meta_path2(A=edge_index_missile, X=node_representation_graph,mini_batch=mini_batch)
+                    if  cfg.k_hop == 3:
+                        node_representation_graph = self.func_meta_path3(A=edge_index_missile, X=node_representation_graph,
+                                                                         mini_batch=mini_batch)
+
+                    if  cfg.k_hop == 4:
+                        node_representation_graph = self.func_meta_path3(A=edge_index_missile, X=node_representation_graph,
+                                                                         mini_batch=mini_batch)
+                        node_representation_graph = self.func_meta_path4(A=edge_index_missile, X=node_representation_graph,
+                                                                         mini_batch=mini_batch)
+
+
+
+                    if  cfg.k_hop == 5:
+                        node_representation_graph = self.func_meta_path3(A=edge_index_missile, X=node_representation_graph,
+                                                                         mini_batch=mini_batch)
+                        node_representation_graph = self.func_meta_path4(A=edge_index_missile, X=node_representation_graph,
+                                                                         mini_batch=mini_batch)
+                        node_representation_graph = self.func_meta_path5(A=edge_index_missile, X=node_representation_graph,
+                                                                         mini_batch=mini_batch)
+
+
+                    if  cfg.k_hop == 6:
+                        node_representation_graph = self.func_meta_path3(A=edge_index_missile, X=node_representation_graph,
+                                                                         mini_batch=mini_batch)
+                        node_representation_graph = self.func_meta_path4(A=edge_index_missile, X=node_representation_graph,
+                                                                         mini_batch=mini_batch)
+                        node_representation_graph = self.func_meta_path5(A=edge_index_missile, X=node_representation_graph,
+                                                                         mini_batch=mini_batch)
+                        node_representation_graph = self.func_meta_path6(A=edge_index_missile, X=node_representation_graph,
+                                                                         mini_batch=mini_batch)
+                else:
+                    node_representation_graph = self.node_representation_wo_graph(missile_node_feature)
+
+
+                node_representation = torch.cat([node_embedding_ship_features], dim=1)
+                return node_representation, node_representation_graph
+        else:
+            """ship feature 만드는 부분"""
+
+            ship_features = torch.tensor(ship_features,dtype=torch.float).to(device).squeeze(1)
+            node_embedding_ship_features = self.node_representation_ship_feature(ship_features)
+            max_len = np.max([len(mnf) for mnf in missile_node_feature])
+            if max_len <= self.action_size:
+                max_len = self.action_size
+            temp = list()
+            for mnf in missile_node_feature:
+                temp.append(
+                    torch.cat([torch.tensor(mnf), torch.tensor(self.dummy_node[max_len - len(mnf)])], dim=0).tolist())
+            #
+            missile_node_feature = torch.tensor(temp, dtype=torch.float).to(device)
+            if cfg.k_hop !=0:
+
+                node_representation_graph = self.func_meta_path(A=edge_index_missile, X=missile_node_feature, mini_batch=mini_batch)
+                node_representation_graph = self.func_meta_path2(A=edge_index_missile, X=node_representation_graph, mini_batch=mini_batch)
+                if cfg.k_hop == 3:
                     node_representation_graph = self.func_meta_path3(A=edge_index_missile, X=node_representation_graph,
                                                                      mini_batch=mini_batch)
 
-                if  cfg.k_hop == 4:
+                if cfg.k_hop == 4:
                     node_representation_graph = self.func_meta_path3(A=edge_index_missile, X=node_representation_graph,
                                                                      mini_batch=mini_batch)
                     node_representation_graph = self.func_meta_path4(A=edge_index_missile, X=node_representation_graph,
                                                                      mini_batch=mini_batch)
 
-
-
-                if  cfg.k_hop == 5:
+                if cfg.k_hop == 5:
                     node_representation_graph = self.func_meta_path3(A=edge_index_missile, X=node_representation_graph,
                                                                      mini_batch=mini_batch)
                     node_representation_graph = self.func_meta_path4(A=edge_index_missile, X=node_representation_graph,
@@ -240,8 +302,7 @@ class Agent:
                     node_representation_graph = self.func_meta_path5(A=edge_index_missile, X=node_representation_graph,
                                                                      mini_batch=mini_batch)
 
-
-                if  cfg.k_hop == 6:
+                if cfg.k_hop == 6:
                     node_representation_graph = self.func_meta_path3(A=edge_index_missile, X=node_representation_graph,
                                                                      mini_batch=mini_batch)
                     node_representation_graph = self.func_meta_path4(A=edge_index_missile, X=node_representation_graph,
@@ -250,51 +311,13 @@ class Agent:
                                                                      mini_batch=mini_batch)
                     node_representation_graph = self.func_meta_path6(A=edge_index_missile, X=node_representation_graph,
                                                                      mini_batch=mini_batch)
+            else:
+                batch_size=  missile_node_feature.shape[0]
+                missile_node_size = missile_node_feature.shape[1]
 
-
-                node_representation = torch.cat([node_embedding_ship_features], dim=1)
-                return node_representation, node_representation_graph
-        else:
-            """ship feature 만드는 부분"""
-            ship_features = torch.tensor(ship_features,dtype=torch.float).to(device).squeeze(1)
-            node_embedding_ship_features = self.node_representation_ship_feature(ship_features)
-            max_len = np.max([len(mnf) for mnf in missile_node_feature])
-            if max_len <= self.action_size:
-                max_len = self.action_size
-            temp = list()
-            for mnf in missile_node_feature:
-                temp.append(torch.cat([torch.tensor(mnf), torch.tensor(self.dummy_node[max_len - len(mnf)])], dim=0).tolist())
-            #
-            missile_node_feature = torch.tensor(temp, dtype=torch.float).to(device)
-            node_representation_graph = self.func_meta_path(A=edge_index_missile, X=missile_node_feature, mini_batch=mini_batch)
-            node_representation_graph = self.func_meta_path2(A=edge_index_missile, X=node_representation_graph, mini_batch=mini_batch)
-            if cfg.k_hop == 3:
-                node_representation_graph = self.func_meta_path3(A=edge_index_missile, X=node_representation_graph,
-                                                                 mini_batch=mini_batch)
-
-            if cfg.k_hop == 4:
-                node_representation_graph = self.func_meta_path3(A=edge_index_missile, X=node_representation_graph,
-                                                                 mini_batch=mini_batch)
-                node_representation_graph = self.func_meta_path4(A=edge_index_missile, X=node_representation_graph,
-                                                                 mini_batch=mini_batch)
-
-            if cfg.k_hop == 5:
-                node_representation_graph = self.func_meta_path3(A=edge_index_missile, X=node_representation_graph,
-                                                                 mini_batch=mini_batch)
-                node_representation_graph = self.func_meta_path4(A=edge_index_missile, X=node_representation_graph,
-                                                                 mini_batch=mini_batch)
-                node_representation_graph = self.func_meta_path5(A=edge_index_missile, X=node_representation_graph,
-                                                                 mini_batch=mini_batch)
-
-            if cfg.k_hop == 6:
-                node_representation_graph = self.func_meta_path3(A=edge_index_missile, X=node_representation_graph,
-                                                                 mini_batch=mini_batch)
-                node_representation_graph = self.func_meta_path4(A=edge_index_missile, X=node_representation_graph,
-                                                                 mini_batch=mini_batch)
-                node_representation_graph = self.func_meta_path5(A=edge_index_missile, X=node_representation_graph,
-                                                                 mini_batch=mini_batch)
-                node_representation_graph = self.func_meta_path6(A=edge_index_missile, X=node_representation_graph,
-                                                                 mini_batch=mini_batch)
+                missile_node_feature = missile_node_feature.reshape(batch_size * missile_node_size, -1)
+                missile_node_feature = self.node_representation_wo_graph(missile_node_feature)
+                node_representation_graph = missile_node_feature.reshape(batch_size, missile_node_size, -1)
             node_representation = torch.cat([node_embedding_ship_features], dim=1)
             return node_representation, node_representation_graph
 
@@ -723,6 +746,7 @@ class Agent:
         self.func_meta_path4.load_state_dict(checkpoint["func_meta_path4"])
         self.func_meta_path5.load_state_dict(checkpoint["func_meta_path5"])
         self.func_meta_path6.load_state_dict(checkpoint["func_meta_path6"])
+        self.node_representation_wo_graph.load_state_dict(checkpoint["node_representation_wo_graph"])
     def eval_check(self, eval):
         if eval == True:
             self.network.eval()
@@ -733,6 +757,7 @@ class Agent:
             self.func_meta_path4.eval()
             self.func_meta_path5.eval()
             self.func_meta_path6.eval()
+            self.node_representation_wo_graph.eval()
 
         else:
             self.network.train()
@@ -743,6 +768,7 @@ class Agent:
             self.func_meta_path4.train()
             self.func_meta_path5.train()
             self.func_meta_path6.train()
+            self.node_representation_wo_graph.train()
     def save_network(self, e, file_dir):
         torch.save({"episode": e,
                     "network": self.network.state_dict(),
@@ -753,7 +779,9 @@ class Agent:
                     "func_meta_path4": self.func_meta_path4.state_dict(),
                     "func_meta_path5": self.func_meta_path5.state_dict(),
                     "func_meta_path6": self.func_meta_path6.state_dict(),
-                    "optimizer_state_dict": self.optimizer.state_dict()},
+                    "optimizer_state_dict": self.optimizer.state_dict(),
+                    "node_representation_wo_graph": self.node_representation_wo_graph.state_dict()
+                    },
                    file_dir + "episode%d.pt" % e)
 
 
