@@ -46,12 +46,19 @@ class PPONetwork(nn.Module):
 
 
 
-    def pi(self, x):
-        x = self.fc_pi(x)
-        x = F.elu(x)
-        x = self.forward_cal(x)
-        pi = self.output_pi(x)
-        return pi
+    def pi(self, x, visualize = False):
+        if visualize == False:
+            x = self.fc_pi(x)
+            x = F.elu(x)
+            x = self.forward_cal(x)
+            pi = self.output_pi(x)
+            return pi
+        else:
+            x = self.fc_pi(x)
+            x = F.elu(x)
+            x = self.forward_cal(x)
+            pi = self.output_pi(x)
+            return x
 
     def v(self, x):
         x = self.fc_v(x)
@@ -213,6 +220,64 @@ class Agent:
     def batch_reset(self):
         self.batch_store = []
 
+    @torch.no_grad()
+    def get_td_target(self, ship_features, node_features_missile, heterogenous_edges, possible_actions, action_feature, reward, done):
+        obs_next, act_graph = self.get_node_representation(ship_features,node_features_missile, heterogenous_edges,mini_batch=False)
+        td_target = reward + self.gamma * self.network.v(obs_next) * (1 - done)
+        return td_target.tolist()[0][0]
+    @torch.no_grad()
+    def sample_action_visualize(self, ship_features,node_features_missile, heterogenous_edges, possible_actions,action_feature, random):
+        if random == False:
+            obs, act_graph = self.get_node_representation(ship_features,node_features_missile,heterogenous_edges,mini_batch=False)
+            act_graph = act_graph[0:self.action_size, :]
+            obs = obs.expand([act_graph.shape[0], obs.shape[1]])
+            obs_n_action = torch.cat([obs, act_graph], dim = 1)
+            logit = [self.network.pi(obs_n_action[i].unsqueeze(0)) for i in range(obs_n_action.shape[0])]
+            outputs = [self.network.pi(obs_n_action[i].unsqueeze(0), visualize=True) for i in
+                       range(obs_n_action.shape[0])]
+            logit = torch.stack(logit).view(1, -1)
+            action_size = obs_n_action.shape[0]
+            if action_size >= self.action_size:
+                 action_size = self.action_size
+            remain_action = torch.tensor([-1e8 for _ in range(self.action_size - action_size)], device=device).unsqueeze(0)
+            logit = torch.cat([logit, remain_action], dim=1)
+            mask = torch.tensor(possible_actions, device=device).bool()
+            logit = logit.masked_fill(mask == 0, -1e8)
+            prob = torch.softmax(logit, dim=-1)
+            m = Categorical(prob)
+            a = m.sample().item()
+            a_index = a
+            prob_a = prob.squeeze(0)[a]
+            action_blue = action_feature[a]
+        else:
+            obs, act_graph = self.get_node_representation(ship_features,node_features_missile,heterogenous_edges,mini_batch=False)
+            act_graph = act_graph[0:self.action_size, :]
+
+            obs = obs.expand([act_graph.shape[0], obs.shape[1]])
+            obs_n_action = torch.cat([obs, act_graph], dim = 1)
+            logit = [self.network.pi(obs_n_action[i].unsqueeze(0)) for i in range(obs_n_action.shape[0])]
+            outputs = [self.network.pi(obs_n_action[i].unsqueeze(0), visualize = True) for i in range(obs_n_action.shape[0])]
+            logit = torch.stack(logit).view(1, -1)
+            action_size = obs_n_action.shape[0]
+            if action_size >= self.action_size:
+                 action_size = self.action_size
+            remain_action = torch.tensor([-1e8 for _ in range(self.action_size - action_size)], device=device).unsqueeze(0)
+            logit = torch.cat([logit, remain_action], dim=1)
+            mask = torch.tensor(possible_actions, device=device).bool()
+            logit = logit.masked_fill(mask == 0, -1e8)
+            logit = logit.masked_fill(mask == 1, 1)
+            prob = torch.softmax(logit, dim=-1)
+            m = Categorical(prob)
+            a = m.sample().item()
+            a_index = a
+            prob_a = prob.squeeze(0)[a]
+            action_blue = action_feature[a]
+            #print(act_graph[a_index].tolist())
+        graph_embedding = act_graph[a_index].tolist()
+        node_feature = node_features_missile[a_index]
+
+        output = outputs[a_index].tolist()[0]
+        return action_blue, prob_a, mask, a_index, graph_embedding, node_feature, output
 
     def get_node_representation(self,
                                 ship_features,
@@ -746,7 +811,10 @@ class Agent:
         self.func_meta_path4.load_state_dict(checkpoint["func_meta_path4"])
         self.func_meta_path5.load_state_dict(checkpoint["func_meta_path5"])
         self.func_meta_path6.load_state_dict(checkpoint["func_meta_path6"])
-        self.node_representation_wo_graph.load_state_dict(checkpoint["node_representation_wo_graph"])
+        try:
+            self.node_representation_wo_graph.load_state_dict(checkpoint["node_representation_wo_graph"])
+        except KeyError:pass
+
     def eval_check(self, eval):
         if eval == True:
             self.network.eval()

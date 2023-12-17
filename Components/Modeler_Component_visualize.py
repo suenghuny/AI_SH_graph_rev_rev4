@@ -17,7 +17,8 @@ record_theta_vaa = list()
 def modeler(data, visualize, size, detection_by_height, tick, simtime_per_framerate, ciws_threshold, action_history_step, epsilon = 20, discr_n = 10,
             air_alert_distance_blue = 10,
             air_alert_distance_yellow = 20,
-            interval_constant_blue = [10,10]
+            interval_constant_blue = [10,10],
+            inception_angle = None
             ):
 
     interval_constant_yellow = random.uniform(0.8,5)
@@ -35,7 +36,8 @@ def modeler(data, visualize, size, detection_by_height, tick, simtime_per_framer
                       air_alert_distance_blue =air_alert_distance_blue,
                       air_alert_distance_yellow=air_alert_distance_yellow,
                       interval_constant_blue=interval_constant_blue,
-                      interval_constant_yellow = interval_constant_yellow
+                      interval_constant_yellow = interval_constant_yellow,
+                      inception_angle =  inception_angle
                       )
     return env
 
@@ -56,7 +58,8 @@ class Environment:
                  ciws_threshold = 2.5,
                  mode = False,
                  air_alert_distance_blue = 20,
-                 air_alert_distance_yellow = 20
+                 air_alert_distance_yellow = 20,
+                 inception_angle = None
                  ):
         self.simtime_per_framerate = simtime_per_framerate # 시뮬레이션 시간 / 프레임 주기
         self.discr_n = discr_n
@@ -117,10 +120,8 @@ class Environment:
         inception_data = self.data.inception_data
         noise = random.uniform(-10, 10)
         self.missile_speed_list = list()
-        if cfg.angle_random == True:
-            inception_range = random.uniform(0, 360)
-        else:
-            inception_range = cfg.inception_angle
+
+        inception_range = inception_angle
         self.random_recording = list()
         for key, value in data.ship_data.items():
             if value['side']=='blue':
@@ -773,12 +774,9 @@ class Environment:
                 ssm_speed = enemy.speed_m
                 node_features.append([f1, f2, f3, f4, f5, f6, 0, ssm_speed/1.4])
                 enemy.last_action_feature[k] = [f1, f2, f3, f4, f5, f6, 0, ssm_speed/1.4]
-            else:
+        if len(self.enemies_fixed_list)+1-len(node_features)>0:
+            for _ in range(len(self.enemies_fixed_list)+1-len(node_features)):
                 node_features.append(dummy)
-                enemy.last_action_feature[k] = dummy
-        # if len(self.enemies_fixed_list)+1-len(node_features)>0:
-        #     for _ in range(len(self.enemies_fixed_list)+1-len(node_features)):
-        #         node_features.append(dummy)
         for missile in ship.ssm_detections:
             f1, f2, f3, f4, f5, f6 = self.get_feature(ship, missile, action_feature= True)
             node_features.append([f1, f2, f3, f4, f5, f6, 1, 0])

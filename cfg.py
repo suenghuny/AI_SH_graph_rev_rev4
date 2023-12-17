@@ -83,7 +83,7 @@ def get_cfg():
     # 이녀석이 찐임
     parser.add_argument("--graph_distance", type=float, default=10, help="graph distance")
     # 이녀석이 찐임
-    parser.add_argument("--bonus_reward", type=float, default=5, help="bonus_reward")
+    parser.add_argument("--bonus_reward", type=float, default=10, help="bonus_reward")
     # 이녀석이 찐임
 
     parser.add_argument("--optimizer", type=str, default='ADAM', help="optimizer")
@@ -94,7 +94,7 @@ def get_cfg():
     parser.add_argument("--kl_target", type=float, default=0.005, help="kl target")
     parser.add_argument("--negativeslope", type=float, default=0.1, help="leaky relu negative slope")
     parser.add_argument("--n_data_parallelism", type=int, default=1, help="data parallelism")
-    parser.add_argument("--k_hop", type=int, default=0, help="gnn k")
+    parser.add_argument("--k_hop", type=int, default=3, help="gnn k")
     parser.add_argument("--n_test", type=int, default=200, help="gnn k")
     parser.add_argument("--angle_random", type=bool, default=False, help="gnn k")
     parser.add_argument("--inception_angle", type=int, default=180, help="gnn k")
