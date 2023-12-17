@@ -43,7 +43,7 @@ def get_cfg():
     parser.add_argument("--lr_min", type=float, default=0.5e-4, help="lr_min")
     parser.add_argument("--lr_critic", type=float, default=1e-3, help="learning rate")
     parser.add_argument("--n_multi_head", type=int, default=1, help="number of multi head")
-    parser.add_argument("--num_episode", type=int, default=1000000, help="number of episode")
+    parser.add_argument("--num_episode", type=int, default=10000, help="number of episode")
     parser.add_argument("--scheduler_step", type =int, default=1000, help= "scheduler step")
     parser.add_argument("--scheduler_ratio", type=float, default=0.5, help= "scheduler ratio")
     parser.add_argument("--train_start", type=int, default=200, help="number of train start")
