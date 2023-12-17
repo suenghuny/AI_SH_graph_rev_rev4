@@ -269,7 +269,7 @@ class Environment:
         avail_actions = list()
         target_distance_list = list()
         air_alert = False
-
+        #print([ship.status for ship in self.enemies_fixed_list])
         for ship in friendlies_fixed_list:
 
             if ship.side == 'blue':
