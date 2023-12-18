@@ -177,7 +177,7 @@ if __name__ == "__main__":
                      K_epoch = cfg.K_epoch,
                      layers=list(eval(cfg.ppo_layers))
                      )
-        load_file = "episode5160"
+        load_file = "episode5460"
         agent.load_network(load_file+'.pt') # 2900, 1600
         reward_list = list()
 

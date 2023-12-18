@@ -122,7 +122,7 @@ if __name__ == "__main__":
     환경 시스템 관련 변수들
 
     """
-    visualize = False  # 가시화 기능 사용 여부 / True : 가시화 적용, False : 가시화 미적용
+    visualize = True  # 가시화 기능 사용 여부 / True : 가시화 적용, False : 가시화 미적용
     size = [600, 600]  # 화면 size / 600, 600 pixel
     tick = 500  # 가시화 기능 사용 시 빠르기
     n_step = cfg.n_step
@@ -148,7 +148,8 @@ if __name__ == "__main__":
     datasets = [i for i in range(1, 10)]
     non_lose_ratio_list = []
     raw_data = list()
-    for inception_angle in [0, 22.5, 45, 67.5, 90, 112.5,135, 157.5,180]:
+    for inception_angle in [90]:
+        print(inception_angle)
         for dataset in datasets:
 
             print("====dataset{}_{}====".format(dataset, inception_angle))
@@ -186,7 +187,7 @@ if __name__ == "__main__":
                          K_epoch = cfg.K_epoch,
                          layers=list(eval(cfg.ppo_layers))
                          )
-            load_file = "episode5160"
+            load_file = "episode5460"
             agent.load_network(load_file+'.pt') # 2900, 1600
             reward_list = list()
 

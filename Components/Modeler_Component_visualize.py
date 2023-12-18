@@ -774,9 +774,12 @@ class Environment:
                 ssm_speed = enemy.speed_m
                 node_features.append([f1, f2, f3, f4, f5, f6, 0, ssm_speed/1.4])
                 enemy.last_action_feature[k] = [f1, f2, f3, f4, f5, f6, 0, ssm_speed/1.4]
-        if len(self.enemies_fixed_list)+1-len(node_features)>0:
-            for _ in range(len(self.enemies_fixed_list)+1-len(node_features)):
+            else:
                 node_features.append(dummy)
+                enemy.last_action_feature[k] = dummy
+        # if len(self.enemies_fixed_list)+1-len(node_features)>0:
+        #     for _ in range(len(self.enemies_fixed_list)+1-len(node_features)):
+        #         node_features.append(dummy)
         for missile in ship.ssm_detections:
             f1, f2, f3, f4, f5, f6 = self.get_feature(ship, missile, action_feature= True)
             node_features.append([f1, f2, f3, f4, f5, f6, 1, 0])
