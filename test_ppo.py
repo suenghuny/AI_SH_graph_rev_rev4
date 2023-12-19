@@ -139,7 +139,7 @@ if __name__ == "__main__":
     # scenario = np.random.choice(scenarios)
     episode_polar_chart = polar_chart[0]
     records = list()
-    datasets = [i for i in range(1, 31)]
+    datasets = [i for i in range(16, 31)]
     non_lose_ratio_list = []
     raw_data = list()
     for dataset in datasets:
@@ -177,7 +177,7 @@ if __name__ == "__main__":
                      K_epoch = cfg.K_epoch,
                      layers=list(eval(cfg.ppo_layers))
                      )
-        load_file = "episode5460"
+        load_file = "episode10200"
         agent.load_network(load_file+'.pt') # 2900, 1600
         reward_list = list()
 
