@@ -30,7 +30,7 @@ def simulation():
                       air_alert_distance_blue=  1,
                       interval_constant_blue = [1.2, 1.2]
                       )
-        epi_reward, eval, win_tag= evaluation(env, temperature1=1,temperature2 =1, warning_distance = 15)
+        epi_reward, eval, win_tag= evaluation(env, temperature1=1,temperature2 =1, warning_distance = 200)
         if win_tag != 'lose':
             score += 1 / n
 
@@ -81,7 +81,7 @@ def evaluation(env,
 
     while not done:
         if env.now % (decision_timestep) <= 0.00001:
-            avail_action_blue, target_distance_blue, air_alert_blue = env.get_avail_actions_temp(side='blue', speed_normalizing_blue=True)
+            avail_action_blue, target_distance_blue, air_alert_blue = env.get_avail_actions_temp(side='blue', speed_normalizing_blue=False)
             avail_action_yellow, target_distance_yellow, air_alert_yellow = env.get_avail_actions_temp(side='yellow')
 
             action_blue = agent_blue.get_action(avail_action_blue, target_distance_blue, air_alert_blue, open_fire_distance = warning_distance)

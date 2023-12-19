@@ -12,6 +12,7 @@ class Policy:
         self.indicator = 'max'
 
     def get_action(self, avail_action_list, target_distance_list, air_alert, open_fire_distance=10):
+
         d_max = 1000000
         if self.rule == 'rule6':  # interval open_fire
             len_target_distance_list = len(target_distance_list)
@@ -79,6 +80,7 @@ class Policy:
         if self.rule == 'rule5':  # greedy open fire
             len_target_distance_list = len(target_distance_list)
             temp = []
+
             for l in range(len_target_distance_list):
                 target_distances = list()
                 for d in target_distance_list[l]:
@@ -88,12 +90,16 @@ class Policy:
                         d = d_max
                     target_distances.append(d)
                 temp.append(target_distances)
+
             target_distance_list = temp
             actions = list()
             for idx in range(len(avail_action_list)):
                 avail_action = np.array(avail_action_list[idx])
                 avail_actions_index = np.array(np.where(avail_action == True)).reshape(-1)
-                a = np.argmin(target_distance_list[idx])
+                if np.min(target_distance_list[idx]) < d_max:
+                    a = np.argmin(target_distance_list[idx])
+                else:
+                    a = 0
                 actions.append(avail_actions_index[a])
 
         if self.rule == 'rule4':
@@ -116,8 +122,7 @@ class Policy:
             for idx in range(len(avail_action_list)):
                 avail_action = np.array(avail_action_list[idx])
                 avail_actions_index = np.array(np.where(avail_action == True)).reshape(-1)
-                actions.append(
-                    np.random.choice(avail_actions_index, p=softmax(target_distance_list[idx], temperature=0)))
+                actions.append(np.random.choice(avail_actions_index, p=softmax(target_distance_list[idx], temperature=0)))
 
         if self.rule == 'rule2':
             actions = list()
