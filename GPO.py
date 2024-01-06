@@ -763,6 +763,7 @@ class Agent:
                     mask = avail_action_blue
                     obs_expand = obs.unsqueeze(1).expand([obs.shape[0], act_graph.shape[1], obs.shape[1]])
                     obs_n_act = torch.cat([obs_expand, act_graph], dim= 2)
+
                     logit = torch.stack([self.network.pi(obs_n_act[:, i]) for i in range(self.action_size)])
                     logit = torch.einsum('ijk->jik', logit).squeeze(2)
                     mask = mask.squeeze(1)

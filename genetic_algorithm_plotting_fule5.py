@@ -2,7 +2,7 @@ from Components.Modeler_Component_test import *
 from Components.Adapter_Component import *
 from Components.Policy import *
 from cfg import get_cfg
-
+import time
 import numpy as np
 
 fix_l = 0
@@ -184,7 +184,9 @@ if __name__ == "__main__":
     polar_chart = [polar_chart_scenario1]
     df_dict = {}
     episode_polar_chart = polar_chart[0]
-    datasets = [i for i in range(1,31)]
+    datasets = [i for i in range(1, 2)]
+    start = time.time()
+
     non_lose_ratio_list = []
     raw_data = list()
     for dataset in datasets:
@@ -280,6 +282,7 @@ if __name__ == "__main__":
         non_lose_ratio_list.append(score)
         df_result = pd.DataFrame(non_lose_ratio_list)
         df_raw = pd.DataFrame(raw_data)
+        print("소요시간", time.time()-start)
         if vessl_on == True:
             df_result.to_csv(output_dir + "GA_result_rule5_param2_angle_{}.csv".format(cfg.inception_angle))
             df_raw.to_csv(output_dir+"raw_data_rule5_angle_{}.csv".format(cfg.inception_angle))

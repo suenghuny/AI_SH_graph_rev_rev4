@@ -134,7 +134,7 @@ if __name__ == "__main__":
     temperature = [10,
                    20]  # rule = 'rule2'인 경우만 적용 / 의사결정의 flexibility / 첫번째 index : 공중 위험이 낮은 상태, 두번째 index : 공중 위험이 높은 상태
     ciws_threshold = 1
-    polar_chart_visualize = False
+    polar_chart_visualize = True
     scenarios = ['scenario1', 'scenario2', 'scenario3']
     lose_ratio = list()
     remains_ratio = list()
@@ -187,7 +187,7 @@ if __name__ == "__main__":
                          K_epoch = cfg.K_epoch,
                          layers=list(eval(cfg.ppo_layers))
                          )
-            load_file = "episode5460"
+            load_file = "episode10200"
             agent.load_network(load_file+'.pt') # 2900, 1600
             reward_list = list()
 
@@ -198,7 +198,7 @@ if __name__ == "__main__":
             random.seed(seed)
             torch.manual_seed(seed)
 
-            for e in range(10):
+            for e in range(20):
                 env = modeler(data,
                               visualize=visualize,
                               size=size,
@@ -213,7 +213,7 @@ if __name__ == "__main__":
                 # with open("data.json", "w") as json_file:
                 #     json.dump(data_memory, json_file)
 
-                with open("data5.json", "w", encoding='utf-8') as json_file:
+                with open("GNN_datassss.json", "w", encoding='utf-8') as json_file:
                     json.dump(data_memory, json_file, ensure_ascii=False)
                 # import matplotlib.pyplot as plt
                 # from sklearn.manifold import TSNE

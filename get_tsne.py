@@ -1,5 +1,5 @@
 import json
-with open("data5.json", "r", encoding='utf-8') as json_file:
+with open("GNN_data.json", "r", encoding='utf-8') as json_file:
     data_memory = json.load(json_file)
 import matplotlib.pyplot as plt
 import numpy as np
@@ -19,7 +19,7 @@ y = [item[3] for item in data_memory]
 tsne = TSNE(n_components=2, random_state=0, perplexity = 30)
 X_2d = tsne.fit_transform(X)
 X = X_2d.tolist()
-with open("X2D_output.json", "w", encoding='utf-8') as json_file:
+with open("X2D_pol.json", "w", encoding='utf-8') as json_file:
     json.dump(X, json_file, ensure_ascii=False)
 
 with open("y.json", "w", encoding='utf-8') as json_file:

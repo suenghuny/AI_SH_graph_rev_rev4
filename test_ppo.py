@@ -117,7 +117,7 @@ if __name__ == "__main__":
     환경 시스템 관련 변수들
 
     """
-    visualize = False  # 가시화 기능 사용 여부 / True : 가시화 적용, False : 가시화 미적용
+    visualize = True  # 가시화 기능 사용 여부 / True : 가시화 적용, False : 가시화 미적용
     size = [600, 600]  # 화면 size / 600, 600 pixel
     tick = 500  # 가시화 기능 사용 시 빠르기
     n_step = cfg.n_step
@@ -139,7 +139,7 @@ if __name__ == "__main__":
     # scenario = np.random.choice(scenarios)
     episode_polar_chart = polar_chart[0]
     records = list()
-    datasets = [i for i in range(16, 31)]
+    datasets = [i for i in range(1, 31)]
     non_lose_ratio_list = []
     raw_data = list()
     for dataset in datasets:
@@ -177,7 +177,7 @@ if __name__ == "__main__":
                      K_epoch = cfg.K_epoch,
                      layers=list(eval(cfg.ppo_layers))
                      )
-        load_file = "episode10200"
+        load_file = "actor_critic"
         agent.load_network(load_file+'.pt') # 2900, 1600
         reward_list = list()
 

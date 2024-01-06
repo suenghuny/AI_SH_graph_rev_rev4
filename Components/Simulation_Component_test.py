@@ -643,10 +643,15 @@ class Missile:
     def get_lock_on_target(self):
 
         in_arc_list, probabilities = self.get_in_arc_list()
+
         probabilities = softmax(probabilities, 1 / 50, reverse=False)
         if len(in_arc_list) >= 1:
+            # if self.cla == 'SSM':
+            #     print(in_arc_list)
+            #     print(probabilities)
             p_d = list()
             p_dc = 1
+
             for p_di in probabilities:
                 p_d.append(p_di)
                 p_dc *= 1 - p_di

@@ -18,8 +18,10 @@ def get_cfg():
     parser.add_argument("--GNN", type=str, default='GCRN', help="map name")
     parser.add_argument("--hidden_size_comm", type=int, default=56, help="GNN hidden layer")
     parser.add_argument("--hidden_size_enemy", type=int, default=64, help="GNN hidden layer")
-    parser.add_argument("--hidden_size_meta_path", type=int, default=64, help="GNN hidden layer")
-    parser.add_argument("--hidden_size_meta_path2", type=int, default=64, help="GNN hidden layer")
+    parser.add_argument("--hidden_size_meta_path",
+                        type=int, default=64, help="GNN hidden layer")
+    parser.add_argument("--hidden_size_meta_path2",
+                        type=int, default=64, help="GNN hidden layer")
     parser.add_argument("--iqn_layers", type=str, default= '[128,64,48,39,16]', help="layer 구조")
     parser.add_argument("--ppo_layers", type=str, default='[128,64,48,39,32]', help="layer 구조")
     parser.add_argument("--ship_layers", type=str, default='[126,108,64]', help="layer 구조")
@@ -29,8 +31,10 @@ def get_cfg():
     parser.add_argument("--n_representation_ship", type=int, default=52, help="")
     parser.add_argument("--n_representation_missile", type=int, default=14, help="")
     parser.add_argument("--n_representation_enemy", type=int, default=28, help="")
-    parser.add_argument("--n_representation_action", type=int, default=42, help="")
-    parser.add_argument("--n_representation_action2", type=int, default=42, help="")
+    parser.add_argument("--n_representation_action",
+                        type=int, default=42, help="")
+    parser.add_argument("--n_representation_action2",
+                        type=int, default=42, help="")
     parser.add_argument("--iqn_layer_size", type=int, default=64, help="")
     parser.add_argument("--iqn_N", type=int, default=48, help="")
     parser.add_argument("--n_cos", type=int, default=36, help="")
@@ -77,13 +81,20 @@ def get_cfg():
     parser.add_argument("--init_constant", type=int, default=10000, help="")
     parser.add_argument("--cuda", type=str, default='cuda:0', help="")
     parser.add_argument("--num_action_history", type=int, default=10, help="")
-
+    # n_representation_action
+    # 45 - -n_representation_action2
+    # 45 - -hidden_size_meta_path
+    # 45 - -hidden_size_meta_path2
+    # 45 - -k_hop
+    # 0 - -n_cos
+    # 32 - -iqn_N
+    # 64
     # 이녀석이 찐임
     parser.add_argument("--discr_n", type=int, default=10, help="")
     # 이녀석이 찐임
     parser.add_argument("--graph_distance", type=float, default=10, help="graph distance")
     # 이녀석이 찐임
-    parser.add_argument("--bonus_reward", type=float, default=5, help="bonus_reward")
+    parser.add_argument("--bonus_reward", type=float, default=2, help="bonus_reward")
     # 이녀석이 찐임
 
     parser.add_argument("--optimizer", type=str, default='ADAM', help="optimizer")
@@ -93,10 +104,11 @@ def get_cfg():
     parser.add_argument("--leakyrelu", type=bool, default=False, help="attention mechanism leaky relu")
     parser.add_argument("--kl_target", type=float, default=0.005, help="kl target")
     parser.add_argument("--negativeslope", type=float, default=0.1, help="leaky relu negative slope")
-    parser.add_argument("--n_data_parallelism", type=int, default=16, help="data parallelism")
+    parser.add_argument("--n_data_parallelism", type=int, default=2, help="data parallelism")
     parser.add_argument("--k_hop", type=int, default=3, help="gnn k")
     parser.add_argument("--n_test", type=int, default=200, help="gnn k")
     parser.add_argument("--angle_random", type=bool, default=False, help="gnn k")
-    parser.add_argument("--inception_angle", type=float, default=90, help="gnn k")
+    parser.add_argument("--inception_angle", type=float, default=180, help="gnn k")
+    parser.add_argument("--n_eval_GA", type=int, default=20, help="gnn k")
 
     return parser.parse_args()
