@@ -119,27 +119,19 @@ class GCRN(nn.Module):
                 H = torch.matmul(a, Wh)
                 temp.append(H)
 
-
-                # a = self._prepare_attentional_mechanism_input(Wq, Wv, E, e, mini_batch = mini_batch)
-                # zero_vec = -9e15 * torch.ones_like(E)
-                # attention = torch.where(E > 0, a, zero_vec)
-                # attention = F.softmax(attention, dim = 1)
-                # H = torch.matmul(attention, Wh)
-                # temp.append(H)
-
             H = torch.cat(temp, dim = 1)
-            #print(H.shape)
             H = self.embedding_layers(H)
             return H
         else:
             batch_size = X.shape[0]
             num_nodes = X.shape[1]
             #mat_a = [torch.zeros(self.num_edge_cat, num_nodes, num_nodes).to(device) for _ in range(batch_size)]
-            empty = torch.zeros(batch_size, num_nodes, self.num_edge_cat, self.graph_embedding_size).to(device)
+            #empty = torch.zeros(batch_size, num_nodes, self.num_edge_cat, self.graph_embedding_size).to(device)
+            empty2 = torch.zeros(batch_size, num_nodes, self.num_edge_cat * self.graph_embedding_size).to(device)
             for b in range(batch_size):
+                temp = list()
                 for e in range(self.num_edge_cat):
-                    E = torch.sparse_coo_tensor(A[b][e],
-                                            torch.ones(torch.tensor(torch.tensor(A[b][e]).shape[1])),
+                    E = torch.sparse_coo_tensor(A[b][e],torch.ones(torch.tensor(torch.tensor(A[b][e]).shape[1])),
                                             (num_nodes, num_nodes)).long().to(device).to_dense()
                     Wh = X[b] @ self.Ws[e]
                     Wq = X[b] @ self.Wq[e]
@@ -148,13 +140,14 @@ class GCRN(nn.Module):
                     zero_vec = -9e15 * torch.ones_like(E)
                     a = torch.where(E > 0, a, zero_vec)
                     a = F.softmax(a, dim=1)
-                    if cfg.dropout >0:
-                        a = F.dropout(a, p=cfg.dropout)
                     H = torch.matmul(a,Wh)
-                    empty[b, :, e, :].copy_(H)
+                    temp.append(H)
+                H_ = torch.cat(temp, dim=1)
+                empty2[b, :, :] = H_
 
-            H = empty.reshape(batch_size, num_nodes, self.num_edge_cat*self.graph_embedding_size)
-            H = H.reshape(batch_size*num_nodes, self.num_edge_cat*self.graph_embedding_size)
+
+
+            H = empty2.reshape(batch_size*num_nodes, -1)
             H = self.embedding_layers(H)
             H = H.reshape(batch_size, num_nodes, self.embedding_size)
             return H

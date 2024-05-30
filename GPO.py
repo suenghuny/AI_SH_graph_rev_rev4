@@ -26,16 +26,13 @@ class PPONetwork(nn.Module):
         self.state_action_size = state_action_size
         self.NN_sequential = OrderedDict()
         self.fc_pi = nn.Linear(state_action_size, layers[0])
-        self.bn_pi = nn.BatchNorm1d(layers[0])
         self.fc_v = nn.Linear(state_size, layers[0])
-        self.bn_v = nn.BatchNorm1d(layers[0])
         self.fcn = OrderedDict()
         last_layer = layers[0]
         for i in range(1, len(layers)):
             layer = layers[i]
             if i <= len(layers)-2:
                 self.fcn['linear{}'.format(i)] = nn.Linear(last_layer, layer)
-                self.fcn['batchnorm{}'.format(i)] = nn.BatchNorm1d(layer)
                 self.fcn['activation{}'.format(i)] = nn.ELU()
                 last_layer = layer
             #else:
@@ -341,8 +338,7 @@ class Agent:
                 max_len = self.action_size
             temp = list()
             for mnf in missile_node_feature:
-                temp.append(
-                    torch.cat([torch.tensor(mnf), torch.tensor(self.dummy_node[max_len - len(mnf)])], dim=0).tolist())
+                temp.append(torch.cat([torch.tensor(mnf), torch.tensor(self.dummy_node[max_len - len(mnf)])], dim=0).tolist())
             #
             missile_node_feature = torch.tensor(temp, dtype=torch.float).to(device)
             if cfg.k_hop !=0:
@@ -429,56 +425,6 @@ class Agent:
             self.done_list = list()
             self.avail_action_blue_list = list()
             self.a_index_list = list()
-
-
-            # ship_feature_list = batch_data[0]
-            # missile_node_feature_list = batch_data[1]
-            # heterogeneous_edges_list = batch_data[2]
-            # action_feature_list = batch_data[3]
-            # action_blue_list = batch_data[4]
-            # reward_list = batch_data[5]
-            # prob_list = batch_data[6]
-            # mask_list = batch_data[7]
-            # done_list = batch_data[8]
-            # avail_action_blue_list = batch_data[9]
-            # a_index_list = batch_data[10]
-
-
-
-            # self.batch_store[0].append(self.ship_feature_list)
-            # self.batch_store[1].append(self.missile_node_feature_list)
-            # self.batch_store[2].append(self.heterogeneous_edges_list)
-            # self.batch_store[3].append(self.action_feature_list)
-            # self.batch_store[4].append(self.action_blue_list)
-            # self.batch_store[5].append(self.reward_list)
-            # self.batch_store[6].append(self.prob_list)
-            # self.batch_store[7].append(self.done_list)
-            # self.batch_store[8].append(self.avail_action_blue_list)
-            # self.batch_store[9].append(self.a_index_list) ##
-            #
-            #
-            # self.ship_feature_list = list()
-            # self.missile_node_feature_list = list()
-            # self.heterogeneous_edges_list = list()
-            # self.action_feature_list = list()
-            # self.action_blue_list = list()
-            # self.reward_list = list()
-            # self.prob_list = list()
-            # self.done_list = list()
-            # self.avail_action_blue_list = list()
-            # self.a_index_list = list()
-
-        # else:
-        #     self.ship_feature_list.append(transition[0])
-        #     self.missile_node_feature_list.append(transition[1])
-        #     self.heterogeneous_edges_list.append(transition[2])
-        #     self.action_feature_list.append(transition[3])
-        #     self.action_blue_list.append(transition[4])
-        #     self.reward_list.append(transition[5])
-        #     self.prob_list.append(transition[6])
-        #     self.done_list.append(transition[7])
-        #     self.avail_action_blue_list.append(transition[8])
-        #     self.a_index_list.append(transition[9])
 
     def make_batch2(self, batch_data):
         ship_feature_list = batch_data[0]
@@ -577,17 +523,16 @@ class Agent:
         obs_n_action = torch.cat([obs, act_graph], dim = 1)
 
 
-
         logit = [self.network.pi(obs_n_action[i].unsqueeze(0)) for i in range(obs_n_action.shape[0])]
+
         logit = torch.stack(logit).view(1, -1)
         action_size = obs_n_action.shape[0]
         if action_size >= self.action_size:
              action_size = self.action_size
         remain_action = torch.tensor([-1e8 for _ in range(self.action_size - action_size)], device=device).unsqueeze(0)
         logit = torch.cat([logit, remain_action], dim=1)
-        #print(logit.shape, remain_action.shape)
+        #print("action", logit.shape)
         mask = torch.tensor(possible_actions, device=device).bool()
-        #print(logit.shape, mask.shape)
         logit = logit.masked_fill(mask == 0, -1e8)
         prob = torch.softmax(logit, dim=-1)
         m = Categorical(prob)
@@ -750,7 +695,8 @@ class Agent:
                     obs, act_graph = self.get_node_representation(ship_feature,missile_node_feature,heterogeneous_edges,mini_batch=True)
                     obs_next = self.get_ship_representation(ship_feature_next)
                     v_s = self.network.v(obs)
-                    td_target = reward.unsqueeze(1) + self.gamma * self.network.v(obs_next) * (1-done).unsqueeze(1)
+                    td_target = reward.unsqueeze(1) + \
+                                self.gamma * self.network.v(obs_next) * (1-done).unsqueeze(1)
                     delta = td_target - v_s
                     delta = delta.cpu().detach().numpy()
                     advantage_lst = []
@@ -764,8 +710,13 @@ class Agent:
                     obs_expand = obs.unsqueeze(1).expand([obs.shape[0], act_graph.shape[1], obs.shape[1]])
                     obs_n_act = torch.cat([obs_expand, act_graph], dim= 2)
 
-                    logit = torch.stack([self.network.pi(obs_n_act[:, i]) for i in range(self.action_size)])
-                    logit = torch.einsum('ijk->jik', logit).squeeze(2)
+                    logit_empty = torch.zeros(obs_n_act.shape[0], self.action_size)
+                    for a in range(self.action_size):
+                        logit_empty[:, a] =self.network.pi(obs_n_act[:, a]).squeeze(1)
+                    logit = logit_empty
+                    # logit = torch.stack([self.network.pi(obs_n_act[:, i]) for i in range(self.action_size)])
+                    # logit = torch.einsum('ijk->jik', logit).squeeze(2)
+                    # print("dkdkd", obs_n_act.shape, logit.shape, logit_empty.shape)
                     mask = mask.squeeze(1)
                     logit = logit.masked_fill(mask == 0, -1e8)
                     pi = torch.softmax(logit, dim=-1)
