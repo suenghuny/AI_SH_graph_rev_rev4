@@ -33,7 +33,6 @@ class NodeEmbedding(nn.Module):
             layer = layers[i]
             if i <= len(layers)-2:
                 self.linears['linear{}'.format(i)]= nn.Linear(last_layer, layer)
-                self.linears['batchnorm{}'.format(i)] = nn.BatchNorm1d(layer)
                 self.linears['activation{}'.format(i)] = nn.ELU()
                 last_layer = layer
             else:
@@ -73,7 +72,7 @@ class GCRN(nn.Module):
             self.Wq.append(nn.Parameter(torch.Tensor(feature_size, graph_embedding_size)))
         self.Wq = nn.ParameterList(self.Wq)
         [glorot(W) for W in self.Wq]
-
+###
         self.embedding_layers = NodeEmbedding(graph_embedding_size*num_edge_cat, embedding_size, layers).to(device)
 
         self.a = [nn.Parameter(torch.empty(size=(2 * graph_embedding_size, 1))) for i in range(num_edge_cat)]
