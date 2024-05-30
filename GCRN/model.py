@@ -33,6 +33,7 @@ class NodeEmbedding(nn.Module):
             layer = layers[i]
             if i <= len(layers)-2:
                 self.linears['linear{}'.format(i)]= nn.Linear(last_layer, layer)
+                self.linears['bn{}'.format(i)] = nn.BatchNorm1d(layer)
                 self.linears['activation{}'.format(i)] = nn.ELU()
                 last_layer = layer
             else:
@@ -42,9 +43,7 @@ class NodeEmbedding(nn.Module):
         #print(self.node_embedding)
         self.node_embedding.apply(weight_init_xavier_uniform)
 
-
     def forward(self, node_feature, missile=False):
-        #print(node_feature.shape)
         node_representation = self.node_embedding(node_feature)
         return node_representation
 

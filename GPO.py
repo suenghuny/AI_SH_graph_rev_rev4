@@ -33,6 +33,7 @@ class PPONetwork(nn.Module):
             layer = layers[i]
             if i <= len(layers)-2:
                 self.fcn['linear{}'.format(i)] = nn.Linear(last_layer, layer)
+                self.fcn['bn{}'.format(i)] = nn.BatchNorm1d(layer)
                 self.fcn['activation{}'.format(i)] = nn.ELU()
                 last_layer = layer
             #else:
