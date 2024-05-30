@@ -710,7 +710,7 @@ class Agent:
                     obs_expand = obs.unsqueeze(1).expand([obs.shape[0], act_graph.shape[1], obs.shape[1]])
                     obs_n_act = torch.cat([obs_expand, act_graph], dim= 2)
 
-                    logit_empty = torch.zeros(obs_n_act.shape[0], self.action_size)
+                    logit_empty = torch.zeros(obs_n_act.shape[0], self.action_size).to(device)
                     for a in range(self.action_size):
                         logit_empty[:, a] =self.network.pi(obs_n_act[:, a]).squeeze(1)
                     logit = logit_empty
