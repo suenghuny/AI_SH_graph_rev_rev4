@@ -189,7 +189,7 @@ if __name__ == "__main__":
     seed = cfg.seed  # 원래 SEED 1234
     np.random.seed(1234)
     random.seed(1234)
-    torch.manual_seed(52)
+    torch.manual_seed(seed)
     data = preprocessing(scenarios)
     t = 0
     env = modeler(data,
