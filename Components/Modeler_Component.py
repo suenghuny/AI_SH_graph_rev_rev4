@@ -724,7 +724,10 @@ class Environment:
             #print("non_action min", np.min(record_theta_r), np.min(record_theta_rv), np.min(record_theta_va))
             #print("non_action max", np.max(record_theta_r), np.max(record_theta_rv), np.max(record_theta_va))
             #print((theta_v+0.4)/(3.6), ((theta_r - theta_v)-(-1.7))/(3.1), ((theta_v - theta_a)-(1.6))/(4.6))
-            return r, v, (theta_v+3.14)/(6.28), ((theta_r - theta_v)+(6.28))/(9.42), a, ((theta_v - theta_a)+(5))/(11.2)
+
+            return r, v, (theta_v+3.14)/(6.28), \
+                   ((theta_r - theta_v)+(6.28))/(9.42), a, \
+                   ((theta_v - theta_a)+(5))/(11.2)
         else:
             r = ((target.position_x - ship.position_x) ** 2 + (target.position_y - ship.position_y) ** 2) ** 0.5 / (
                         (target.speed + ship.speed) * 2000)
@@ -739,6 +742,7 @@ class Environment:
                 theta_a = 0
             # print("action min", np.min(record_theta_ra), np.min(record_theta_rva), np.min(record_theta_vaa))
             # print("action max", np.max(record_theta_ra), np.max(record_theta_rva), np.max(record_theta_vaa))
+            # print(r, v, (theta_v + 3.14) / (6.28), ((theta_r - theta_v)+(6.28))/(12.56), a, ((theta_v - theta_a)+(5))/(8.5))
             return r, v, (theta_v + 3.14) / (6.28), ((theta_r - theta_v)+(6.28))/(12.56), a, ((theta_v - theta_a)+(5))/(8.5)
 
 
@@ -786,9 +790,6 @@ class Environment:
         node_cats = [[0],[],[],[] ]
         idx = 0
         for ship in self.friendlies_fixed_list:
-
-
-
             for enemy in self.enemies_fixed_list:
                 if enemy.status != 'destroyed':
                     f1, f2, f3, f4, f5, f6 = self.get_feature(ship, enemy)

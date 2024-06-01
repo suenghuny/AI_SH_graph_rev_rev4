@@ -30,7 +30,7 @@ def get_cfg():
     parser.add_argument("--n_representation_missile", type=int, default=14, help="")
     parser.add_argument("--n_representation_enemy", type=int, default=28, help="")
     parser.add_argument("--n_representation_action", type=int, default=48, help="")
-    parser.add_argument("--n_representation_action2", type=int, default=48, help="")
+    parser.add_argument("--n_representation_action2", type=int, default=56, help="")
     parser.add_argument("--iqn_layer_size", type=int, default=64, help="")
     parser.add_argument("--iqn_N", type=int, default=48, help="")
     parser.add_argument("--n_cos", type=int, default=36, help="")
